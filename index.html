@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Prolog коли с различни правила и GIF</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      max-width: 700px;
+      margin: 30px auto;
+      background: #f9f9f9;
+      color: #333;
+      padding: 20px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+      border-radius: 10px;
+      text-align: center;
+    }
+    textarea {
+      width: 90%;
+      max-width: 600px;
+      height: 120px;
+      font-family: monospace;
+      font-size: 16px;
+      margin-top: 10px;
+      border-radius: 6px;
+      border: 2px solid #007acc;
+      padding: 8px;
+      resize: vertical;
+    }
+    button {
+      margin-top: 15px;
+      padding: 10px 25px;
+      font-size: 18px;
+      background-color: #007acc;
+      border: none;
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    button:hover {
+      background-color: #005f99;
+    }
+    #result {
+      margin-top: 20px;
+      font-size: 18px;
+      min-height: 30px;
+      font-weight: bold;
+      color: #004a99;
+    }
+    .car-container {
+      margin-top: 30px;
+      min-height: 160px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #d0e8ff;
+      border-radius: 12px;
+      box-shadow: 0 0 10px #a0c4ff;
+    }
+    .car-gif {
+      max-width: 180px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px #005f99;
+    }
+  </style>
+</head>
+<body>
+  <h1>Задание: Програма с Prolog за коли и GIF визуализация</h1>
+
+  <p class="instructions">
+    Имате задача да създадете малко приложение, което използва <strong>Пролог</strong> за логическо извеждане на коли.  
+    След като въведете Prolog заявка, програмата ще търси резултат и ако открие кола, ще покаже подходяща анимирана GIF картинка.  
+    <br><br>
+    <strong>Как да добавите собствен Prolog код?</strong><br>
+    - В кода в променливата <code>knowledge</code> можете да добавяте нови коли и правила.<br>
+    - Например: <code>car(tesla).</code> и съответно правила като <code>is_electric(X) :- car(X).</code><br>
+    <br>
+    <strong>Как да добавите нови GIF изображения?</strong><br>
+    - Намерете подходящ анимиран GIF в интернет (например в <a href="https://giphy.com" target="_blank">Giphy</a> или друг сайт).<br>
+    - Копирайте директния линк към GIF файла.<br>
+    - Добавете нов запис в обекта <code>carAnimations</code> с името на колата и HTML за картинката, например:<br>
+    <code>tesla: '<img src="your_gif_link.gif" class="car-gif" alt="Tesla" />'</code><br>
+    - Не забравяйте да добавите и колата в Prolog базата.<br>
+  </p>
+
+  <h1>Prolog коли с различни правила и GIF</h1>
+
+  <textarea id="prolog-input">
+% Примери на заявки:
+is_sports_car(X).
+is_electric(X).
+is_suv(X).
+  </textarea><br />
+  <button onclick="runProlog()">Изпълни</button>
+
+  <div id="result"></div>
+  <div class="car-container" id="car-animation"></div>
+
+  <script src="https://unpkg.com/tau-prolog"></script>
+  <script>
+    const session = pl.create();
+
+    // Разширена база знания с коли и правила
+    const knowledge = `
+      car(ferrari).
+      car(tesla).
+      car(jeep).
+
+      % Спортни коли
+      sports_car(ferrari).
+
+      % Електрически коли
+      electric(tesla).
+
+      % SUV
+      suv(jeep).
+
+      % Правила
+      is_sports_car(X) :- sports_car(X).
+      is_electric(X) :- electric(X).
+      is_suv(X) :- suv(X).
+    `;
+
+    session.consult(knowledge);
+
+    const carAnimations = {
+      ferrari: '<img src="https://media.giphy.com/media/3o7btPCcdNniyf0ArS/giphy.gif" class="car-gif" alt="Ферари анимация" />',
+      tesla: '<img src="https://media.giphy.com/media/26BRzozg4TCas1JcQ/giphy.gif" class="car-gif" alt="Тесла анимация" />',
+      jeep: '<img src="https://media.giphy.com/media/l0Iyl55kTeh71nTWw/giphy.gif" class="car-gif" alt="Джип анимация" />'
+    };
+
+    function runProlog() {
+      const input = document.getElementById("prolog-input").value;
+      const resultDiv = document.getElementById("result");
+      const animDiv = document.getElementById("car-animation");
+
+      resultDiv.innerHTML = "";
+      animDiv.innerHTML = "";
+
+      session.query(input);
+      session.answers(answer => {
+        if(answer === false) {
+          resultDiv.innerHTML += `<p>Няма повече резултати.</p>`;
+          return;
+        }
+        const str = pl.format_answer(answer);
+        if (str === "false.") {
+          resultDiv.innerHTML = "<p>Няма резултати за тази заявка.</p>";
+          return;
+        }
+        resultDiv.innerHTML += `<p>${str}</p>`;
+
+        const match = str.match(/X = (\w+)/);
+        if (match) {
+          const car = match[1];
+          if (carAnimations[car]) {
+            animDiv.innerHTML = carAnimations[car];
+          } else {
+            animDiv.innerHTML = "<p>Няма GIF за тази кола.</p>";
+          }
+        }
+      });
+    }
+  </script>
+</body>
+</html>
